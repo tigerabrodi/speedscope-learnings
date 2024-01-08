@@ -99,6 +99,8 @@ node --cpu-prof -- ./node_modules/.bin/eslint . --ignore-pattern "docs/**"
 
 Output File: By default, Node.js creates a .cpuprofile file in the current working directory. The file name is usually of the format isolate-0xnnnnnnnnnnnn-v8.log.
 
+This method is only applicable when the script is directly invoking a Node.js process. For other types of scripts (e.g., shell scripts or commands that don’t directly invoke Node.js), this approach won't work.
+
 Customizing Output:
 
 You can specify a custom output file name using the --cpu-prof-name flag.
@@ -106,5 +108,52 @@ Example: `node --cpu-prof --cpu-prof-name=profile.cpuprofile my-script.js`.
 
 ## Profiling a Part of Your Application
 
-To profile specific parts of your application, you can use the inspector module to start and stop profiling programmatically.
-This allows more targeted profiling and can be used to avoid profiling startup or shutdown phases.
+To profile specific parts of your Node.js application, you can use Node.js’s built-in `inspector` module. This allows you to programmatically control when to start and stop profiling, enabling targeted profiling of certain functions or operations.
+
+- **Basic Setup**:
+
+  - **Import the Inspector Module**: First, include the inspector module in your script.
+  - **Start and Stop Profiling**: Use the `session.post` method to start and stop the CPU profiler.
+
+  Example Code:
+
+  ```javascript
+  const inspector = require("inspector");
+  const fs = require("fs");
+  const session = new inspector.Session();
+
+  session.connect();
+
+  // Start profiling
+  session.post("Profiler.enable", () => {
+    session.post("Profiler.start", () => {
+      // Your code to profile goes here
+
+      // Example: A function you want to profile
+      myFunctionToProfile();
+
+      // Stop profiling after the function call
+      session.post("Profiler.stop", (err, { profile }) => {
+        // Write profile data to a file
+        fs.writeFileSync("profile.cpuprofile", JSON.stringify(profile));
+
+        // End the session
+        session.disconnect();
+      });
+    });
+  });
+
+  function myFunctionToProfile() {
+    // Function logic
+  }
+  ```
+
+- **How it Works**:
+
+  - The script starts a profiling session using the inspector module.
+  - It then executes the code you want to profile.
+  - After the code execution, it stops the profiling and saves the profiling data to a `.cpuprofile` file, which you can then load into tools like Chrome DevTools or SpeedScope for analysis.
+
+- **Use Cases**: This approach is perfect when you want to profile specific parts of your application, such as a particular function or a set of operations, especially those that don’t start immediately when your application runs.
+
+Using the `inspector` module for targeted profiling offers a precise way to measure the performance impact of specific code segments in your Node.js application.
