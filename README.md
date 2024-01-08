@@ -55,3 +55,56 @@ SpeedScope offers three different views for analyzing performance profiles: Time
 - **How it Works**: It stacks the profiles in a way that shows both the chronological order of function calls and their cumulative time. The x-axis represents time, and the y-axis shows the cumulative duration of function calls.
 
 - **Use Cases**: Ideal for a more comprehensive analysis where you need insights into the timing and frequency of function calls. It can be particularly useful when you need to balance the insights gained from Time Order and Left Heavy views.
+
+# Left heavy
+
+In the Left Heavy view, the visualization is focused on showing you which functions (or code paths) in your profile are consuming the most time, and it organizes this information in a way that prioritizes these functions.
+
+1. **Most Time-Consuming Functions to the Left**: The functions that consume the most time (including the time spent in functions they call) are placed towards the left side of the graph. This makes it easy to identify the most significant performance bottlenecks in your application.
+
+2. **Stack Depth and Function Calls**: Each horizontal layer or "bar" in the graph represents a function in the call stack. The topmost bar represents a function that was directly consuming CPU (or whichever resource you're profiling). The bars beneath it represent the sequence of function calls that led to that top function being executed.
+
+3. **Understanding the Call Hierarchy**:
+
+   - The function at the top (the widest bar on the left) is where the most time is being spent.
+   - Directly beneath this top bar are the functions it called, and below those are the functions they called, and so on. This structure gives you a hierarchical view of function calls.
+   - If a function (bar) is directly beneath another, it means the upper function called the lower one.
+
+4. **Navigation and Interaction**:
+
+   - You can click on a function (bar) to zoom into it. This can help you focus on the specific call hierarchy stemming from that function.
+   - When you zoom in, you can see more details about the lower-level functions that may not be visible at the initial zoom level due to their smaller contribution to the total execution time.
+
+5. **Use Case**:
+   - It's particularly useful for identifying "hot paths" in your code – the sequences of function calls that cumulatively take up the most time.
+   - This view helps in understanding which high-level functions are the main culprits of performance issues and which specific lower-level calls contribute to these issues.
+
+# .cpuprofile cookbook
+
+The .cpuprofile files are generated for profiling Node.js applications.
+
+Direct Script Execution: You can use --cpu-prof when directly executing a Node.js script. For example:
+
+```
+node --cpu-prof my-script.js
+```
+
+This command profiles my-script.js and generates a .cpuprofile file upon completion.
+
+With npm Scripts: If you're running a script defined in package.json, prepend node --cpu-prof before the script command. For instance:
+
+```
+node --cpu-prof -- ./node_modules/.bin/eslint . --ignore-pattern "docs/**"
+```
+
+Output File: By default, Node.js creates a .cpuprofile file in the current working directory. The file name is usually of the format isolate-0xnnnnnnnnnnnn-v8.log.
+
+Customizing Output:
+
+You can specify a custom output file name using the --cpu-prof-name flag.
+Example: `node --cpu-prof --cpu-prof-name=profile.cpuprofile my-script.js`.
+
+## Profiling a Part of Your Application
+
+To profile specific parts of your application, you can use the inspector module to start and stop profiling programmatically.
+This allows more targeted profiling and can be used to avoid profiling startup or shutdown phases.
